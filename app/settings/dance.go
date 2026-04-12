@@ -142,3 +142,15 @@ func (d *defaultsFactory) InitPippi() *pippi {
 		SpinnerRadius:    100,
 	}
 }
+
+type lookahead struct {
+	Scale             float64 `min:"0.1" max:"3"`
+	LookaheadStrength float64 `min:"0" max:"1"`
+}
+
+func (d *defaultsFactory) InitLookahead() *lookahead {
+	return &lookahead{
+		Scale:             0.5,
+		LookaheadStrength: 0.6,
+	}
+}

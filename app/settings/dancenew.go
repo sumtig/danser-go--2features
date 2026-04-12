@@ -10,10 +10,11 @@ func initCursorDance() *cursorDance {
 		Spinners: []*spinner{
 			DefaultsFactory.InitSpinner(),
 		},
-		ComboTag:           false,
-		Battle:             false,
-		DoSpinnersTogether: true,
-		TAGSliderDance:     false,
+		ComboTag:             false,
+		Battle:               false,
+		DoSpinnersTogether:   true,
+		TAGSliderDance:       false,
+		SmartCursorAssignment: false,
 		MoverSettings: &moverSettings{
 			Bezier: []*bezier{
 				DefaultsFactory.InitBezier(),
@@ -39,12 +40,15 @@ func initCursorDance() *cursorDance {
 			Pippi: []*pippi{
 				DefaultsFactory.InitPippi(),
 			},
+			Lookahead: []*lookahead{
+				DefaultsFactory.InitLookahead(),
+			},
 		},
 	}
 }
 
 type mover struct {
-	Mover             string `combo:"spline,bezier,circular,linear,axis,aggressive,flower,momentum,exgon,pippi"`
+	Mover             string `combo:"spline,bezier,circular,linear,axis,aggressive,flower,momentum,exgon,pippi,lookahead"`
 	SliderDance       bool
 	RandomSliderDance bool
 }
@@ -79,6 +83,7 @@ type cursorDance struct {
 	Battle             bool       `liveedit:"false"`
 	DoSpinnersTogether bool       `liveedit:"false"`
 	TAGSliderDance     bool       `label:"TAG slider dance" liveedit:"false"`
+	SmartCursorAssignment bool    `liveedit:"false:`
 	MoverSettings      *moverSettings
 }
 
@@ -91,4 +96,5 @@ type moverSettings struct {
 	ExGon      []*exgon    `new:"InitExGon"`
 	Linear     []*linear   `new:"InitLinear"`
 	Pippi      []*pippi    `new:"InitPippi"`
+	Lookahead  []*lookahead `new:"InitLookahead"`
 }

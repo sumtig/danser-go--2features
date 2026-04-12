@@ -92,6 +92,8 @@ func GetMoverCtorByName(name string) (moverCtor func() MultiPointMover, finalNam
 		moverCtor = NewMomentumMover
 	case "pippi":
 		moverCtor = NewPippiMover
+	case "lookahead":
+		moverCtor = NewLookaheadMover
 	default:
 		moverCtor = NewAngleOffsetMover
 		finalName = "flower"

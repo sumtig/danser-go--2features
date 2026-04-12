@@ -8,6 +8,8 @@ import (
 	"github.com/wieku/danser-go/app/dance/spinners"
 	"github.com/wieku/danser-go/app/graphics"
 	"github.com/wieku/danser-go/app/settings"
+	"github.com/wieku/danser-go/framework/math/vector"
+	"math"
 	"sort"
 	"strings"
 )
@@ -39,7 +41,6 @@ func (controller *GenericController) InitCursors() {
 
 	counter := make(map[string]int)
 
-	// Mover initialization
 	for i := range controller.cursors {
 		controller.cursors[i] = graphics.NewCursor()
 
@@ -63,14 +64,12 @@ func (controller *GenericController) InitCursors() {
 
 	queue := controller.bMap.GetObjectsCopy()
 
-	// Convert retarded (0 length / 0ms) sliders to pseudo-circles
 	for i := 0; i < len(queue); i++ {
 		if s, ok := queue[i].(*objects.Slider); ok && s.IsRetarded() {
 			queue = schedulers.PreprocessQueue(i, queue, true)
 		}
 	}
 
-	// Convert sliders to pseudo-circles for tag cursors
 	if !settings.CursorDance.ComboTag && !settings.CursorDance.Battle &&
 		settings.CursorDance.TAGSliderDance && settings.TAG > 1 {
 		for i := 0; i < len(queue); i++ {
@@ -78,17 +77,10 @@ func (controller *GenericController) InitCursors() {
 		}
 	}
 
-	// Resolving 2B conflicts
 	for i := 0; i < len(queue); i++ {
 		if s, ok := queue[i].(*objects.Slider); ok {
 			found := false
 
-			// We need to loop backwards to look for overlapping spinners (p) that are separated by circles:
-			// --ppppppppppppppppp------
-			// ----------c--c-----------
-			// ---------------ssssssss--
-			// Looking just by i-1 (like i+1 in forward detection) wouldn't detect that scenario because objects
-			// are not sorted by end times
 			for j := i - 1; j >= 0; j-- {
 				if o := queue[i-1]; o.GetEndTime() >= s.GetStartTime() {
 					queue = schedulers.PreprocessQueue(i, queue, true)
@@ -97,7 +89,6 @@ func (controller *GenericController) InitCursors() {
 				}
 			}
 
-			// If no conflict was detected in the past then look one object ahead, no looping is needed in this scenario
 			if !found && i+1 < len(queue) {
 				if o := queue[i+1]; o.GetStartTime() <= s.GetEndTime() {
 					queue = schedulers.PreprocessQueue(i, queue, true)
@@ -106,7 +97,6 @@ func (controller *GenericController) InitCursors() {
 		}
 	}
 
-	// Second 2B pass for spinners
 	for i := 0; i < len(queue); i++ {
 		if s, ok := queue[i].(*objects.Spinner); ok {
 			var subSpinners []objects.IHitObject
@@ -138,7 +128,12 @@ func (controller *GenericController) InitCursors() {
 		}
 	}
 
-	// If DoSpinnersTogether is true with tag mode, allow all tag cursors to spin the same spinner with different movers
+	cursorLastPos := make([]vector.Vector2f, settings.TAG)
+	for i := range cursorLastPos {
+		cursorLastPos[i] = vector.NewVec2f(256, 192)
+	}
+	comboAssignment := make(map[int64]int)
+
 	for j, o := range queue {
 		_, isSpinner := o.(*objects.Spinner)
 
@@ -147,15 +142,39 @@ func (controller *GenericController) InitCursors() {
 				queues[i].hitObjects = append(queues[i].hitObjects, o)
 			}
 		} else if settings.CursorDance.ComboTag {
-			i := int(o.GetComboSet()) % settings.TAG
+			comboSet := o.GetComboSet()
+
+			if _, assigned := comboAssignment[comboSet]; !assigned {
+				if settings.CursorDance.SmartCursorAssignment {
+					notePos := o.GetStartPosition()
+					bestCursor := 0
+					bestDist := float32(math.MaxFloat32)
+
+					for i := 0; i < settings.TAG; i++ {
+						dx := cursorLastPos[i].X - notePos.X
+						dy := cursorLastPos[i].Y - notePos.Y
+						dist := dx*dx + dy*dy
+						if dist < bestDist {
+							bestDist = dist
+							bestCursor = i
+						}
+					}
+
+					comboAssignment[comboSet] = bestCursor
+				} else {
+					comboAssignment[comboSet] = int(comboSet) % settings.TAG
+				}
+			}
+
+			i := comboAssignment[comboSet]
 			queues[i].hitObjects = append(queues[i].hitObjects, o)
+			cursorLastPos[i] = o.GetEndPosition()
 		} else {
 			i := j % settings.TAG
 			queues[i].hitObjects = append(queues[i].hitObjects, o)
 		}
 	}
 
-	//Initialize spinner movers
 	for i := range controller.cursors {
 		spinMover := "circle"
 		if len(settings.CursorDance.Spinners) > 0 {
