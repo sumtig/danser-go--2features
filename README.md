@@ -24,6 +24,11 @@ As danser is in development phase, some things may break. If that happens please
 * [osu! top 50 knockout | YURRY CANNON - Suicide Parade [Sakase]](https://youtu.be/GS_yoq5MJMU)
 * [osu! top 50 replays knockout | Kobaryo - Bookmaker [Corrupt The World]](https://youtu.be/SJqkP1IDUq0)
 
+## New Stuff i added in this fork of danser
+ - A New Lookahed mover (dont recommend probably)
+ - Combo Tag
+yeah thats it ig idk
+
 ## Running Danser
 
 You can download the newest Windows/Linux 64-bit binaries from [releases](https://github.com/Wieku/danser-go/releases).
